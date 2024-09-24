@@ -1,4 +1,3 @@
-
 page_url = input("Please enter or copy-and-paste the web address of the Humble Bundle page containing the items you wish to collect information for. All item details will be saved in a CSV spreadsheet file within the same directory from which this app was run:\n")
 
 def CollectHumbleBundleItems(url):
@@ -53,7 +52,7 @@ def CollectHumbleBundleItems(url):
     
     #=========================================================================================================
 
-    print("------------------------------------------------/n")
+    print("------------------------------------------------\n")
 
     #Variables used for CSV Row creation
     item_title_CSV = ""
@@ -71,14 +70,22 @@ def CollectHumbleBundleItems(url):
             tiers[i].click() 
             time.sleep(3)
             
-            #Go through and store all the items' info in CSV rows
-            
+            #Find all the item related elements and store them.
             items = driver.find_elements(By.CLASS_NAME, 'tier-item-view')
             descriptions = driver.find_elements(By.CLASS_NAME, 'description')
             
+            #Go through all the items and collect their info for the CSV
             for k in range(len(items)):
                 item_title_CSV = items[k].find_element(By.CLASS_NAME, 'item-title').text
-                item_info_CSV = descriptions[k].get_attribute("textContent").strip()
+                item_info_CSV = descriptions[k].get_attribute("innerHTML")
+                
+                # Clean Up the formatting for the description text using REGEX
+                from re import sub                
+                item_info_CSV = sub(r'<[^/][^>]*>', '', item_info_CSV)  # Remove opening tags
+                item_info_CSV = sub(r'</[^>]+>', '\n', item_info_CSV)  # Replace closing tags with newline
+                item_info_CSV = item_info_CSV.replace('&nbsp;', ' ')  # Replace non-breaking spaces with regular spaces
+                item_info_CSV = item_info_CSV.strip()  # Clean up leading/trailing whitespace
+
                 print("Title: " + item_title_CSV)
                 print("Description: " + item_info_CSV + "\n")
                 row_data = [None] * 20 # Redeclared between items to clear it and prevent issues. 
@@ -104,7 +111,7 @@ def CollectHumbleBundleItems(url):
                 
     except Exception as e: print("Error: ", e)
             
-    # Write the CVS data to the CSV File
+    # Write the CSV data to the CSV File
     writer.writerows(CSV_data)
 
     # Close the CSV file
